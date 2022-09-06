@@ -150,9 +150,6 @@ def search_venues():
 
 @app.route('/venues/<int:venue_id>')
 def show_venue(venue_id):
-	# shows the venue page with the given venue_id
-	# TODO: replace with real venue data from the venues table, using venue_id
-	
 	venue = Venue.query.get(venue_id)
 	setattr(venue, 'past_shows', [])
 	setattr(venue, 'upcoming_shows', [])
@@ -161,22 +158,13 @@ def show_venue(venue_id):
 	upcoming_shows_count = 0
 	shows = db.session.query(Artist, Show.date).join(Show).filter(Show.venue_id == venue_id)
 	for artist, date in shows:
-			if date < current_time:
-					venue.past_shows.append({
-							'artist_id': artist.id,
-							'artist_name': artist.name,
-							'artist_image_link': artist.image_link,
-							'start_time': str(date)
-					})
-					past_shows_count += 1
-			else:
-					venue.upcoming_shows.append({
-							'artist_id': artist.id,
-							'artist_name': artist.name,
-							'artist_image_link': artist.image_link,
-							'start_time': str(date)
-					})
-					upcoming_shows_count += 1
+		temp = {'artist_id': artist.id,'artist_name': artist.name,'artist_image_link': artist.image_link,'start_time': str(date)}
+		if date < current_time:
+			venue.past_shows.append(temp)
+			past_shows_count += 1
+		else:
+			venue.upcoming_shows.append(temp)
+			upcoming_shows_count += 1
 	setattr(venue, 'past_shows_count', past_shows_count)
 	setattr(venue, 'upcoming_shows_count', upcoming_shows_count)
 	setattr(venue, 'genres', venue.genres.split(' , '))
@@ -275,6 +263,7 @@ def search_artists():
 
 @app.route('/artists/<int:artist_id>')
 def show_artist(artist_id):
+
 	current_time = datetime.now()
 	artist = Artist.query.get(artist_id)
 	setattr(artist, 'past_shows', [])
@@ -283,26 +272,18 @@ def show_artist(artist_id):
 	upcoming_shows_count = 0
 	shows = db.session.query(Venue, Show.date).join(Show).filter(Show.artist_id == artist_id)
 	for venue, date in shows:
-			if date < current_time:
-					artist.past_shows.append({
-							'venue_id': venue.id,
-							'venue_name': venue.name,
-							'venue_image_link': venue.image_link,
-							'start_time': str(date)
-					})
-					past_shows_count += 1
-			else:
-					artist.upcoming_shows.append({
-							'venue_id': venue.id,
-							'venue_name': venue.name,
-							'venue_image_link': venue.image_link,
-							'start_time': str(date)
-					})
-					upcoming_shows_count += 1
+		temp = {'venue_id': venue.id,'venue_name': venue.name,'venue_image_link': venue.image_link,'start_time': str(date)}
+		if date < current_time:
+			artist.past_shows.append(temp)
+			past_shows_count += 1
+		else:
+			artist.upcoming_shows.append(temp)
+			upcoming_shows_count += 1
 	setattr(artist, 'past_shows_count', past_shows_count)
 	setattr(artist, 'upcoming_shows_count', upcoming_shows_count)
 	setattr(artist, 'website', artist.website_link)
 	setattr(artist, 'genres', artist.genres.split(' , '))
+	setattr(artist, 'seeking_venue', artist.seeking_venues)
 	return render_template('pages/show_artist.html', artist=artist)
 
 #  Update
@@ -327,8 +308,7 @@ def edit_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-	# TODO: take values from the form submitted, and update existing
-	# artist record with ID <artist_id> using the new attributes
+
 	error = False 
 	artist = Artist.query.get(artist_id)
 	name = request.form['name']
@@ -372,7 +352,6 @@ def edit_venue(venue_id):
 	form.image_link.data = x.image_link
 	form.website_link.data = x.website_link
 	form.seeking_description.data = x.seeking_description
-	# TODO: populate form with values from venue with ID <venue_id>
 	return render_template('forms/edit_venue.html', form=form, venue=x)
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
@@ -389,7 +368,7 @@ def edit_venue_submission(venue_id):
 		venue.facebook_link = request.form['facebook_link']
 		venue.image_link = request.form['image_link']
 		venue.website_link = request.form['website_link']
-		venue.seeking_venues = False
+		venue.seeking_talent = False
 		if 'seeking_talent' in request.form.keys():
 			venue.seeking_talent = True
 		venue.seeking_description = request.form['seeking_description']
@@ -400,6 +379,10 @@ def edit_venue_submission(venue_id):
 	finally:
 		db.session.close()
 
+	if error:
+		flash("Venue Edit Failed")
+	else:
+		flash("Venue Edit Successful")
 	return redirect(url_for('show_venue', venue_id=venue_id))
 
 #  Create Artist
@@ -448,45 +431,6 @@ def create_artist_submission():
 
 @app.route('/shows')
 def shows():
-	# displays list of shows at /shows
-	# TODO: replace with real venues data.
-	data=[{
-		"venue_id": 1,
-		"venue_name": "The Musical Hop",
-		"artist_id": 4,
-		"artist_name": "Guns N Petals",
-		"artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-		"start_time": "2019-05-21T21:30:00.000Z"
-	}, {
-		"venue_id": 3,
-		"venue_name": "Park Square Live Music & Coffee",
-		"artist_id": 5,
-		"artist_name": "Matt Quevedo",
-		"artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-		"start_time": "2019-06-15T23:00:00.000Z"
-	}, {
-		"venue_id": 3,
-		"venue_name": "Park Square Live Music & Coffee",
-		"artist_id": 6,
-		"artist_name": "The Wild Sax Band",
-		"artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-		"start_time": "2035-04-01T20:00:00.000Z"
-	}, {
-		"venue_id": 3,
-		"venue_name": "Park Square Live Music & Coffee",
-		"artist_id": 6,
-		"artist_name": "The Wild Sax Band",
-		"artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-		"start_time": "2035-04-08T20:00:00.000Z"
-	}, {
-		"venue_id": 3,
-		"venue_name": "Park Square Live Music & Coffee",
-		"artist_id": 6,
-		"artist_name": "The Wild Sax Band",
-		"artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-		"start_time": "2035-04-15T20:00:00.000Z"
-	}]
-
 	data = []
 	for x in Show.query.all():
 		data.append({
