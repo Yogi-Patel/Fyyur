@@ -13,6 +13,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from flask_migrate import Migrate
+from models import Venue, Artist, Show, db
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -20,64 +21,13 @@ from flask_migrate import Migrate
 app = Flask(__name__)
 moment = Moment(app)
 app.config.from_object('config')
-db = SQLAlchemy(app)
+db.init_app(app)
 
 migrate = Migrate(app,db)
 
 #----------------------------------------------------------------------------#
-# Models.
+# Models are inside models.py
 #----------------------------------------------------------------------------#
-
-class Venue(db.Model):
-		__tablename__ = 'Venue'
-
-		id = db.Column(db.Integer, primary_key=True)
-		name = db.Column(db.String(), nullable = False)
-		city = db.Column(db.String(120), nullable = False)
-		state = db.Column(db.String(120), nullable = False)
-		address = db.Column(db.String(120), nullable = False)
-		phone = db.Column(db.String(120))
-		genres = db.Column(db.String(300), nullable = False)
-		image_link = db.Column(db.String(500))
-		facebook_link = db.Column(db.String(120))
-		website_link = db.Column(db.String(500))
-		seeking_talent = db.Column(db.Boolean, default = False)
-		seeking_description = db.Column(db.String())
-
-		show = db.relationship("Show", backref = "venue", lazy = True)
-
-		def __repr__(self):
-			return f'\n<Venue: {self.id}, name: {self.name}, city: {self.city}, state: {self.state}, address: {self.address}, phone: {self.phone}, image_link: {self.image_link}, facebook_link: {self.facebook_link}, genres: {self.genres}, website: {self.website_link}, shows: {self.show}> \n\n\n\n'
-
-
-class Artist(db.Model):
-		__tablename__ = 'Artist'
-
-		id = db.Column(db.Integer, primary_key=True)
-		name = db.Column(db.String(), nullable = False)
-		city = db.Column(db.String(120), nullable = False)
-		state = db.Column(db.String(120), nullable = False)
-		phone = db.Column(db.String(120))
-		genres = db.Column(db.String(300), nullable = False)
-		image_link = db.Column(db.String(500))
-		facebook_link = db.Column(db.String(120))
-		website_link = db.Column(db.String(500))
-		seeking_venues = db.Column(db.Boolean, default = False)
-		seeking_description = db.Column(db.String())
-
-		show = db.relationship("Show", backref = "artist", lazy = True)
-
-		def __repr__(self):
-			return f'<Artist: {self.id}, name: {self.name}, city: {self.city}, state: {self.state}, phone: {self.phone}, genres: {self.genres}, image_link: {self.image_link}, facebook_link: {self.facebook_link}, shows: {self.show}> \n\n\n'
-
-
-class Show(db.Model):
-	__tablename__ = "Show"
-	id = db.Column(db.Integer, primary_key = True)
-	artist_id = db.Column(db.Integer, db.ForeignKey('Artist.id'), nullable = False)
-	venue_id = db.Column(db.Integer, db.ForeignKey('Venue.id'), nullable = False)
-	date = db.Column(db.DateTime, nullable = False)
-
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -203,9 +153,10 @@ def create_venue_submission():
 		venue = Venue(name = name, city = city, state = state, address = address, phone = phone, genres = genres, image_link = image_link, website_link = website_link, seeking_talent = seeking_talent, seeking_description = seeking_description)
 		db.session.add(venue)
 		db.session.commit()
-	except:
+	except Exception as e:
 		db.session.rollback()
 		error = True
+		print(e)
 	finally:
 		db.session.close()
 	
@@ -326,9 +277,10 @@ def edit_artist_submission(artist_id):
 	db.session.commit()
 	try:
 		pass
-	except:
+	except Exception as e:
 		db.session.rollback()
 		error = True
+		print(e)
 	finally:
 		db.session.close()
 
@@ -373,9 +325,10 @@ def edit_venue_submission(venue_id):
 			venue.seeking_talent = True
 		venue.seeking_description = request.form['seeking_description']
 		db.session.commit()
-	except:
+	except Exception as e:
 		db.session.rollback()
 		error = True
+		print(e)
 	finally:
 		db.session.close()
 
@@ -413,9 +366,10 @@ def create_artist_submission():
 		artist = Artist(name = name, city = city, state = state, phone = phone, genres = genres, facebook_link = facebook_link, image_link = image_link, website_link = website_link, seeking_venues = seeking_venues, seeking_description = seeking_description)
 		db.session.add(artist)
 		db.session.commit()
-	except:
+	except Exception as e:
 		db.session.rollback()
 		error = True
+		print(e)
 	finally:
 		db.session.close()
 
@@ -459,9 +413,10 @@ def create_show_submission():
 		show = Show(artist_id = artist_id, venue_id = venue_id, date = start_time)
 		db.session.add(show)
 		db.session.commit()
-	except:
+	except Exception as e:
 		db.session.rollback()
 		error = True
+		print(e)
 	finally:
 		db.session.close()
 
